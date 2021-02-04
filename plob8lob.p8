@@ -10,17 +10,17 @@ objects = {}
 function _init()
  objects.w = World:create()
  objects.b = Ball:create({31, 31})
- objects.p1 = Blob:create({23, 0}, -1)
- objects.p2 = Blob:create({87, 0}, -2)
+ objects.p1 = Blob:create({23, 0}, 0)
+ objects.p2 = Blob:create({87, 0}, 2)
 end
 
 function _update()
  -- interact with players
  if objects.b:collide(objects.p1:getBounding()) then
-   objects.b:bounce(objects.p1.pos, objects.p1.v)
+   objects.b:bounce(objects.p1:getCenter(), objects.p1.v)
  end
  if objects.b:collide(objects.p2:getBounding()) then
-   objects.b:bounce(objects.p2.pos, objects.p2.v)
+   objects.b:bounce(objects.p2:getCenter(), objects.p2.v)
  end
 
  -- interact with world
@@ -30,8 +30,8 @@ function _update()
  end
  if (y1 <= 0) then
   objects.b = Ball:create({31, 31})
-  objects.p1 = Blob:create({23, 0}, -1)
-  objects.p2 = Blob:create({87, 0}, -2)
+  objects.p1 = Blob:create({23, 0}, 0)
+  objects.p2 = Blob:create({87, 0}, 2)
   rules.kickoff = true
  end
 
@@ -58,7 +58,7 @@ function World:update()
 end
 
 function World:draw()
- rect(63, 127, 65, 80)
+ rectfill(63, 127, 65, 80)
 end
 
 -->8
@@ -74,6 +74,7 @@ function Blob:create(pos, p)
  blob.v = {0, 0}
  blob.sprStand = 0
  blob.p = p or 0
+ blob.bb = {3, 0, 12, 11}
  return blob
 end
 
@@ -101,7 +102,7 @@ function Blob:draw()
  spr(
   self.sprStand, 
   self.pos[1], 
-  127 - (self.h-1 - self.pos[2]), 
+  127 - (self.h-1 + self.pos[2]), 
   -flr(-self.w/8), 
   -flr(-self.h/8)) 
 end
@@ -111,7 +112,11 @@ function Blob:jump()
 end
 
 function Blob:getBounding()
- return self.pos[1], self.pos[2], self.pos[1]+(self.w-1), self.pos[2]+(self.h-1)
+ return offsetBounding(self.bb, self.pos)
+end
+
+function Blob:getCenter()
+ return { self.pos[1] + 0.5 * (self.w-1), self.pos[2] + 0.5 * (self.h-1) }
 end
 
 -->8
@@ -126,50 +131,54 @@ function Ball:create(pos)
  ball.w, ball.h = 8, 8
  ball.v = {0, 0}
  ball.spr = 2
+ ball.bb = {0, 0, 8, 8}
  return ball
 end
 
 function Ball:update()
- if not(kickoff) then
+ if not(rules.kickoff) then
   self.v[2] -= physics.gravity
  end
 
  self.pos = { 
-  mid(0, self.pos[1] + self.v[1], 127), 
+  mid(0, self.pos[1] + self.v[1], 127 - (self.w - 1)), 
   mid(0, self.pos[2] + self.v[2], physics.yMax) }
 end
 
 function Ball:draw()
- printh(self.pos[1])
- printh(self.pos[2])
  spr(
   self.spr, 
   self.pos[1], 
-  127 - (self.h-1 - self.pos[2]), 
+  127 - (self.h-1 + self.pos[2]), 
   -flr(-self.w/8), 
   -flr(-self.h/8)) 
 end
 
 function Ball:getBounding()
- return self.pos[1], self.pos[2], self.pos[1]+(self.w-1), self.pos[2]+(self.h-1)
+ return offsetBounding(self.bb, self.pos)
 end
 
 function Ball:collide(x1, y1, x2, y2)
  local w = x2 - x1
  local h = y2 - y1
+ local lx, ly, rx, uy = offsetBounding(self.bb, self.pos)
  if (
-   (x1 < self.pos[1] + self.w) and
-   (x1 + w > self.pos[1]) and
-   (y1 < self.pos[2] + self.h) and
-   (y1 + h > self.pos[2]) ) then
-  return false 
+   (x1 < rx) and
+   (x1 + w > lx) and
+   (y1 < uy) and
+   (y1 + h > ly) ) then
+  rules.kickoff = false
+  return true 
  end
  return false
 end
 
 function Ball:bounce(p, v)
- vec = {self.pos[1] - p[1], self.pos[2] - p[2]}
- self.v = vec
+ local vel = min(vlen(v), 2)
+ vec = { 
+  self.pos[1] + 0.5 * (self.w - 1) - p[1], 
+  self.pos[2] + 0.5 * (self.h - 1) - p[2] }
+ self.v = { vel * vec[1] / vlen(vec), vel * vec[2] / vlen(vec) }
 end
 
 -->8
@@ -177,8 +186,12 @@ end
 
 function vlen(vec)
  local s = 0.0
- foreach(vec, function(x) s += pow(x, 2) end)
+ foreach(vec, function(x) s += x^2 end)
  return sqrt(s)
+end
+
+function offsetBounding(bb, pos)
+ return bb[1] + pos[1], bb[2] + pos[2], bb[3] + pos[1], bb[4] + pos[2]
 end
 
 __gfx__
