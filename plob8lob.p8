@@ -3,7 +3,7 @@ version 29
 __lua__
 -- Blobby Volley clone
 -- by HighPerformanceCookie
-physics = { yMax = 500, gravity = 0.2 }
+physics = { yMax = 500, gravity = 0.2, poleHeight = 50}
 rules = { kickoff = true, lastTouch = 0, countTouch = 0 }
 objects = {}
 
@@ -26,8 +26,15 @@ function _update()
  -- interact with world
  x1, y1, x2, y2 = objects.b:getBounding()
  if (x1 < 0) or (x2 > 127) then
-  -- objects.b:reflectHorizontal()
+  objects.b:reflectVertical()
+ elseif objects.b:collide(objects.w.getPoleBounding()) then 
+  if (y1 > ...) then
+   objects.b:reflectHorizontal()
+  else
+   objects.b:reflectVertical()
  end
+
+ -- check if a player scored
  if (y1 <= 0) then
   objects.b = Ball:create({31, 31})
   objects.p1 = Blob:create({23, 0}, 0)
@@ -58,7 +65,7 @@ function World:update()
 end
 
 function World:draw()
- rectfill(63, 127, 65, 80)
+ rectfill(63, 127, 127 - physics.poleHeight, 80)
 end
 
 -->8
@@ -181,6 +188,13 @@ function Ball:bounce(p, v)
  self.v = { vel * vec[1] / vlen(vec), vel * vec[2] / vlen(vec) }
 end
 
+function Ball:reflectVertical()
+ self.v = { -self.v[1], self.v[2] }
+end
+
+function Ball:reflectHorizontal()
+ self.v = { self.v[1], -self.v[2] }
+end
 -->8
 -- utils
 
