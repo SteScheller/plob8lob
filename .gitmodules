@@ -1,0 +1,3 @@
+[submodule "tools/pic2pico"]
+	path = tools/pic2pico
+	url = git@github.com:nodepond/pic2pico.git
