@@ -27,11 +27,12 @@ function _update()
  x1, y1, x2, y2 = objects.b:getBounding()
  if (x1 < 0) or (x2 > 127) then
   objects.b:reflectVertical()
- elseif objects.b:collide(objects.w.getPoleBounding()) then 
-  if (y1 > ...) then
+ elseif objects.b:collide(objects.w:getPoleBounding()) then 
+  if (y1 >= 50) then
    objects.b:reflectHorizontal()
   else
    objects.b:reflectVertical()
+  end
  end
 
  -- check if a player scored
@@ -57,15 +58,21 @@ World.__index = World
 
 function World:create(pos)
  local world = {}
+ world.poleBb = { 63, 0, 65, physics.poleHeight }
  setmetatable(world, World)
  return world
+end
+
+function World:getPoleBounding()
+ return unpack(self.poleBb)
 end
 
 function World:update()
 end
 
 function World:draw()
- rectfill(63, 127, 127 - physics.poleHeight, 80)
+ rectfill(
+  self.poleBb[1], 127 - self.poleBb[2], self.poleBb[3], 127 - self.poleBb[4])
 end
 
 -->8
@@ -181,7 +188,10 @@ function Ball:collide(x1, y1, x2, y2)
 end
 
 function Ball:bounce(p, v)
- local vel = min(vlen(v), 2)
+ printh(vlen(v))
+ printh(vlen(self.v))
+ printh('------------------')
+ local vel = vlen(v) + vlen(self.v)
  vec = { 
   self.pos[1] + 0.5 * (self.w - 1) - p[1], 
   self.pos[2] + 0.5 * (self.h - 1) - p[2] }
