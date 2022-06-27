@@ -3,7 +3,7 @@ version 35
 __lua__
 -- Blobby Volley clone
 -- by HighPerformanceCookie
-physics = { yMax = 500, gravity = 0.3, poleHeight = 50, limits1 = {0, 47}, limits2 = {65, 127} }
+physics = { yMax = 500, gravity = 0.3, poleHeight = 50, limits1 = {-3, 50}, limits2 = {62, 115} }
 rules = { kickoff = true, lastTouch = 0, countTouch = 0 }
 settings = { color1 = 11, color2 = 8}
 objects = {}
@@ -86,7 +86,7 @@ function Blob:create(pos, p, color, limits)
  local blob = {}
  setmetatable(blob, Blob)
  blob.pos = pos -- origin: lower left of bounding box
- blob.c = c
+ blob.c = color
  blob.l = limits
  blob.w, blob.h = 16, 16
  blob.v = {0, 0}
@@ -116,7 +116,8 @@ function Blob:update()
   self.v[2] = 0
  end
 
- self.pos = { max(-3, self.pos[1] + self.v[1]), max(0, self.pos[2] + self.v[2])}
+ x = min(max(self.l[1], self.pos[1] + self.v[1]), self.l[2])
+ self.pos = {x, max(0, self.pos[2] + self.v[2])}
 end
 
 function Blob:draw()
